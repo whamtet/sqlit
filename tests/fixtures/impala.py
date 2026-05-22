@@ -8,7 +8,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from tests.fixtures.utils import cleanup_connection, is_port_open, run_cli
+from tests.fixtures.utils import cleanup_connection, is_binary_port_open, run_cli
 
 IMPALA_HOST = os.environ.get("IMPALA_HOST", "localhost")
 IMPALA_PORT = int(os.environ.get("IMPALA_PORT", "21050"))
@@ -18,7 +18,7 @@ IMPALA_AUTH_MECHANISM = os.environ.get("IMPALA_AUTH_MECHANISM", "NOSASL")
 
 def impala_available() -> bool:
     """Check if Impala is available."""
-    return is_port_open(IMPALA_HOST, IMPALA_PORT)
+    return is_binary_port_open(IMPALA_HOST, IMPALA_PORT)
 
 
 @pytest.fixture(scope="session")

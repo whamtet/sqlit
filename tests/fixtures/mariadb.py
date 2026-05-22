@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from tests.fixtures.utils import cleanup_connection, is_port_open, run_cli
+from tests.fixtures.utils import cleanup_connection, is_binary_port_open, run_cli
 
 # Note: Using 127.0.0.1 instead of localhost to force TCP connection (localhost uses Unix socket)
 MARIADB_HOST = os.environ.get("MARIADB_HOST", "127.0.0.1")
@@ -19,7 +19,7 @@ MARIADB_DATABASE = os.environ.get("MARIADB_DATABASE", "test_sqlit")
 
 def mariadb_available() -> bool:
     """Check if MariaDB is available."""
-    return is_port_open(MARIADB_HOST, MARIADB_PORT)
+    return is_binary_port_open(MARIADB_HOST, MARIADB_PORT)
 
 
 @pytest.fixture(scope="session")
