@@ -13,6 +13,7 @@ from tests.fixtures.firebird import *
 from tests.fixtures.flight import *
 from tests.fixtures.impala import *
 from tests.fixtures.mariadb import *
+from tests.fixtures.mariadb_charset import *
 from tests.fixtures.mssql import *
 from tests.fixtures.mysql import *
 from tests.fixtures.mysql_charset import *

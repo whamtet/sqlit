@@ -289,6 +289,48 @@ services:
     tmpfs:
       - /var/lib/mysql
 
+  # MariaDB with TIS-620 charset (Thai) - for charset testing
+  mariadb-tis620:
+    image: mariadb:11
+    container_name: sqlit-test-mariadb-tis620
+    command: --character-set-server=tis620 --collation-server=tis620_thai_ci
+    environment:
+      MARIADB_ROOT_PASSWORD: "TestPassword123!"
+      MARIADB_USER: "testuser"
+      MARIADB_PASSWORD: "TestPassword123!"
+      MARIADB_DATABASE: "test_sqlit"
+    ports:
+      - "${MARIADB_TIS620_PORT:-3310}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    tmpfs:
+      - /var/lib/mysql
+
+  # MariaDB with Latin1 charset - for charset testing
+  mariadb-latin1:
+    image: mariadb:11
+    container_name: sqlit-test-mariadb-latin1
+    command: --character-set-server=latin1 --collation-server=latin1_swedish_ci
+    environment:
+      MARIADB_ROOT_PASSWORD: "TestPassword123!"
+      MARIADB_USER: "testuser"
+      MARIADB_PASSWORD: "TestPassword123!"
+      MARIADB_DATABASE: "test_sqlit"
+    ports:
+      - "${MARIADB_LATIN1_PORT:-3311}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    tmpfs:
+      - /var/lib/mysql
+
   cockroachdb:
     image: cockroachdb/cockroach:latest
     container_name: sqlit-test-cockroachdb

@@ -278,7 +278,7 @@ Most of the time you can just run `sqlit` and connect. If a Python driver is mis
 | PostgreSQL / CockroachDB / Supabase | `psycopg2-binary`            | `pipx inject sqlit-tui psycopg2-binary`            | `python -m pip install psycopg2-binary`            |
 | SQL Server                          | `mssql-python`               | `pipx inject sqlit-tui mssql-python`               | `python -m pip install mssql-python`               |
 | MySQL                               | `PyMySQL`                    | `pipx inject sqlit-tui PyMySQL`                    | `python -m pip install PyMySQL`                    |
-| MariaDB                             | `mariadb`                    | `pipx inject sqlit-tui mariadb`                    | `python -m pip install mariadb`                    |
+| MariaDB                             | `PyMySQL`                    | `pipx inject sqlit-tui PyMySQL`                    | `python -m pip install PyMySQL`                    |
 | Oracle                              | `oracledb`                   | `pipx inject sqlit-tui oracledb`                   | `python -m pip install oracledb`                   |
 | DuckDB                              | `duckdb`                     | `pipx inject sqlit-tui duckdb`                     | `python -m pip install duckdb`                     |
 | ClickHouse                          | `clickhouse-connect`         | `pipx inject sqlit-tui clickhouse-connect`         | `python -m pip install clickhouse-connect`         |

@@ -80,7 +80,6 @@ def _get_arch_package_name(package_name: str) -> str | None:
         "mssql-python": "python-mssql",
         "PyMySQL": "python-pymysql",
         "mysql-connector-python": "python-mysql-connector",
-        "mariadb": "python-mariadb-connector",
         "oracledb": "python-oracledb",
         "duckdb": "python-duckdb",
         "clickhouse-connect": "python-clickhouse-connect",

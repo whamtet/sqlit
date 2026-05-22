@@ -39,12 +39,12 @@ def mariadb_db(mariadb_server_ready: bool) -> str:
         pytest.skip("MariaDB is not available")
 
     try:
-        import mariadb
+        import pymysql
     except ImportError:
-        pytest.skip("mariadb is not installed")
+        pytest.skip("PyMySQL is not installed")
 
     try:
-        conn = mariadb.connect(
+        conn = pymysql.connect(
             host=MARIADB_HOST,
             port=MARIADB_PORT,
             database=MARIADB_DATABASE,
@@ -120,7 +120,7 @@ def mariadb_db(mariadb_server_ready: bool) -> str:
     yield MARIADB_DATABASE
 
     try:
-        conn = mariadb.connect(
+        conn = pymysql.connect(
             host=MARIADB_HOST,
             port=MARIADB_PORT,
             database=MARIADB_DATABASE,

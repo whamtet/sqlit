@@ -40,7 +40,6 @@ all = [
     "psycopg2-binary>=2.9.0",
     "mssql-python>=1.1.0",
     "PyMySQL>=1.1.0",
-    "mariadb>=1.1.0",
     "oracledb>=2.0.0",
     "ibm_db>=3.2.0",
     "hdbcli>=2.20.0",
@@ -68,7 +67,7 @@ postgres = ["psycopg2-binary>=2.9.0"]
 cockroachdb = ["psycopg2-binary>=2.9.0"]
 mssql = ["mssql-python>=1.1.0"]
 mysql = ["PyMySQL>=1.1.0"]
-mariadb = ["mariadb>=1.1.0"]
+mariadb = ["PyMySQL>=1.1.0"]
 oracle = ["oracledb>=2.0.0"]
 db2 = ["ibm_db>=3.2.0"]
 hana = ["hdbcli>=2.20.0"]
@@ -225,7 +224,6 @@ namespace_packages = true
 [[tool.mypy.overrides]]
 module = [
     "pymysql",
-    "mariadb",
     "oracledb",
     "duckdb",
     "clickhouse_connect",
