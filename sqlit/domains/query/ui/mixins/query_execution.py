@@ -775,14 +775,32 @@ class QueryExecutionMixin(ProcessWorkerLifecycleMixin):
         self._run_external_editor(editor_cmd)
 
     def _open_editor_picker(self: QueryMixinHost) -> None:
+        from sqlit.domains.query.app.editor import detect_editors
+
         from ..screens import EditorPickerScreen
+
+        if not any(e.is_installed for e in detect_editors()):
+            self.notify(
+                "No terminal editor detected. Install nvim, vim, hx, micro, or "
+                "nano and try again (or set $EDITOR).",
+                severity="error",
+                timeout=8,
+            )
+            return
+
+        self.notify(
+            "No preferred editor set — pick one (saved for next time).",
+            severity="information",
+        )
 
         def on_pick(result: str | None) -> None:
             if not result:
+                self.notify("Editor selection cancelled.", severity="warning")
                 return
             settings = self.services.settings_store.load_all()
             settings[self.PREFERRED_EDITOR_SETTING] = result
             self.services.settings_store.save_all(settings)
+            self.notify(f"Editor set to '{result}'. Launching…", severity="information")
             self._run_external_editor(result)
 
         self.push_screen(EditorPickerScreen(), on_pick)
@@ -829,9 +847,11 @@ class QueryExecutionMixin(ProcessWorkerLifecycleMixin):
             edited = edited[:-1]
 
         if edited == original:
+            self.notify("Editor closed — no changes.", severity="information")
             return
 
         self._apply_history_query(edited)
+        self.notify("Query updated from editor.", severity="information")
 
         if self.current_config and self._should_save_query_history(self.current_config):
             database = getattr(self, "_active_database", None) or ""

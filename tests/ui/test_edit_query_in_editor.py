@@ -74,8 +74,8 @@ class TestEditQueryInEditor:
             assert app.query_input.text == "SELECT 2 FROM users"
 
     @pytest.mark.asyncio
-    async def test_picker_opens_when_no_preference_set(self):
-        """Empty settings + no detected env editor → picker pops up."""
+    async def test_picker_opens_when_no_preference_but_editor_detected(self):
+        """Empty settings + no env editor + at least one installed editor → picker pops up."""
         from sqlit.domains.query.ui.screens import EditorPickerScreen
 
         app = _make_app(settings={"theme": "tokyo-night"})
@@ -86,7 +86,7 @@ class TestEditQueryInEditor:
 
             with patch(
                 "sqlit.domains.query.app.editor.shutil.which",
-                return_value=None,
+                side_effect=lambda cmd: "/usr/bin/nvim" if cmd == "nvim" else None,
             ), patch.dict("os.environ", {}, clear=False) as env:
                 env.pop("VISUAL", None)
                 env.pop("EDITOR", None)
@@ -97,6 +97,33 @@ class TestEditQueryInEditor:
                 isinstance(screen, EditorPickerScreen)
                 for screen in app.screen_stack
             )
+
+    @pytest.mark.asyncio
+    async def test_no_picker_when_no_editor_detected(self):
+        """Nothing installed at all → notify with install hint, no picker."""
+        from sqlit.domains.query.ui.screens import EditorPickerScreen
+
+        app = _make_app(settings={"theme": "tokyo-night"})
+        notifications: list[str] = []
+        original_notify = app.notify
+        app.notify = lambda msg, **kw: (notifications.append(msg), original_notify(msg, **kw))[1]  # type: ignore[assignment]
+
+        async with app.run_test(size=(120, 40)) as pilot:
+            app.query_input.text = "SELECT 1"
+            await pilot.pause()
+
+            with patch(
+                "sqlit.domains.query.app.editor.shutil.which", return_value=None
+            ), patch.dict("os.environ", {}, clear=False) as env:
+                env.pop("VISUAL", None)
+                env.pop("EDITOR", None)
+                app.action_edit_query_in_editor()
+                await pilot.pause()
+
+            assert not any(
+                isinstance(screen, EditorPickerScreen) for screen in app.screen_stack
+            )
+            assert any("No terminal editor detected" in n for n in notifications)
 
     @pytest.mark.asyncio
     async def test_no_change_when_buffer_text_unchanged(self):
