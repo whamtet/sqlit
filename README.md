@@ -243,7 +243,7 @@ If an older install left files in `~/.sqlit/`, they are moved to the new locatio
 
 ### Custom keybindings
 
-Override defaults by editing `keymap.json` in your sqlit config dir — sqlit auto-creates it on first run. Only list the bindings you want to change; everything you don't touch keeps its default. Use a list for aliases, or `null` to unbind a key entirely. [`config/keymap.template.json`](config/keymap.template.json) is the full default keymap — copy lines you want to override, or use it as a reference for action and state names.
+Edit the `keymap.json` file in your sqlit config dir. See [`config/keymap.template.json`](config/keymap.template.json) for the full default keymap. Keymap.json need to only contain the overriding keymaps.
 
 ## FAQ
 
