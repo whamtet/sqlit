@@ -5,9 +5,13 @@ Follows the same domain-service pattern as
 configuration step run during app startup. The loader looks for, in order:
 
 1. A named keymap selected by the ``custom_keymap`` setting, resolved
-   relative to ``~/.config/sqlit/keymaps/<name>.json`` (or an absolute path).
-2. ``~/.config/sqlit/keymap.json`` if it exists — picked up automatically
+   relative to ``<CONFIG_DIR>/keymaps/<name>.json`` (or an absolute path).
+2. ``<CONFIG_DIR>/keymap.json`` if it exists — picked up automatically
    so a user can customize without editing settings.json.
+
+``CONFIG_DIR`` resolves to ``$SQLIT_CONFIG_DIR`` if set, otherwise
+``$XDG_CONFIG_HOME/sqlit`` (defaulting to ``~/.config/sqlit``). See
+:mod:`sqlit.shared.core.store`.
 
 The JSON is strictly a *key remapping*. The set of actions and the states
 they live in are defined in :mod:`sqlit.core.keymap`; the user only
@@ -61,6 +65,82 @@ CUSTOM_KEYMAP_DIR = CONFIG_DIR / "keymaps"
 # their config dir — no settings edit, no mkdir.
 DEFAULT_KEYMAP_FILE = CONFIG_DIR / "keymap.json"
 
+# Friendly literal characters → the canonical Textual key name(s) they
+# expand to. Lets the user write `"?"` instead of `"question_mark"` and
+# `":"` instead of spelling out the colon's three terminal variants.
+# Multi-element values cover the platforms / terminals that emit
+# different `event.key` strings for the same physical keypress.
+_FRIENDLY_TO_CANONICAL: dict[str, list[str]] = {
+    "?": ["question_mark"],
+    "/": ["slash"],
+    "$": ["dollar_sign"],
+    "%": ["percent_sign"],
+    "*": ["asterisk"],
+    "^": ["circumflex_accent"],
+    ":": ["colon", "shift+semicolon", ":"],
+    ";": ["semicolon"],
+    "@": ["at"],
+    "#": ["number_sign"],
+    "!": ["exclamation_mark"],
+    "&": ["ampersand"],
+    "~": ["tilde"],
+    "`": ["grave_accent"],
+    "(": ["left_parenthesis"],
+    ")": ["right_parenthesis"],
+    "[": ["left_square_bracket"],
+    "]": ["right_square_bracket"],
+    "{": ["left_curly_bracket"],
+    "}": ["right_curly_bracket"],
+    "<": ["less_than_sign"],
+    ">": ["greater_than_sign"],
+    "|": ["vertical_line"],
+    "_": ["underscore"],
+}
+
+# Reverse map (canonical → friendly) for emitting templates and any
+# user-facing serialization of the default keymap. Multi-variant
+# entries collapse to their first canonical, since the friendly form
+# is the same for all of them.
+_CANONICAL_TO_FRIENDLY: dict[str, str] = {
+    canonical: friendly
+    for friendly, canonicals in _FRIENDLY_TO_CANONICAL.items()
+    for canonical in canonicals
+}
+
+
+def _expand_user_key(key: str) -> list[str]:
+    """Expand a single user-supplied key string to its canonical Textual form(s).
+
+    Splits off modifier prefixes (``ctrl+``, ``shift+``, ``alt+``, ``cmd+``),
+    looks up the base character in the friendly-name table, and re-attaches
+    the modifiers to each canonical variant. Unknown bases pass through
+    unchanged so Textual's own key names (e.g. ``escape``, ``f5``) keep
+    working.
+    """
+    parts = key.split("+")
+    base = parts[-1]
+    modifiers = parts[:-1]
+    canonicals = _FRIENDLY_TO_CANONICAL.get(base, [base])
+    if not modifiers:
+        return list(canonicals)
+    prefix = "+".join(modifiers) + "+"
+    return [prefix + c for c in canonicals]
+
+
+def canonical_to_friendly(key: str) -> str:
+    """Convert a canonical Textual key name to its friendly form for display.
+
+    Used when generating the template from defaults. Keeps modifier
+    prefixes intact and only rewrites the base name.
+    """
+    parts = key.split("+")
+    base = parts[-1]
+    modifiers = parts[:-1]
+    friendly = _CANONICAL_TO_FRIENDLY.get(base, base)
+    if not modifiers:
+        return friendly
+    return "+".join(modifiers) + "+" + friendly
+
 
 class FileBasedKeymapProvider(KeymapProvider):
     """Keymap provider built by merging user overrides onto the defaults."""
@@ -113,13 +193,34 @@ class KeymapManager:
                 self.load_error = f"Failed to load custom keymap '{keymap_name}': {exc}"
             return
 
-        # No setting → look for the default file. Silently absent is fine; a
-        # broken file still raises.
+        # No setting → load the default file, creating an empty scaffold if
+        # it doesn't exist so the file is discoverable in the user's config
+        # dir even before they've customized anything.
+        self._ensure_default_keymap_scaffold()
         if DEFAULT_KEYMAP_FILE.exists():
             try:
                 self._register_custom_keymap(DEFAULT_KEYMAP_FILE, DEFAULT_KEYMAP_FILE.name)
             except Exception as exc:
                 self.load_error = f"Failed to load {DEFAULT_KEYMAP_FILE}: {exc}"
+
+    @staticmethod
+    def _ensure_default_keymap_scaffold() -> None:
+        """Create an empty keymap.json on first run so users can discover it."""
+        if DEFAULT_KEYMAP_FILE.exists():
+            return
+        try:
+            DEFAULT_KEYMAP_FILE.parent.mkdir(parents=True, exist_ok=True)
+            DEFAULT_KEYMAP_FILE.write_text(
+                json.dumps(
+                    {"keymap": {"action_keys": {}, "leader_commands": {}}},
+                    indent=2,
+                ) + "\n",
+                encoding="utf-8",
+            )
+        except OSError:
+            # Read-only config dir or similar — silently skip; the user
+            # can still create the file themselves.
+            pass
 
     def _resolve_keymap_path(self, keymap_name: str) -> Path:
         if keymap_name.startswith(("~", "/")) or Path(keymap_name).is_absolute():
@@ -172,6 +273,8 @@ class KeymapManager:
             merged_action,
             user_leader_overrides,
             user_action_overrides,
+            base_leader,
+            base_action,
         )
 
         return FileBasedKeymapProvider(keymap_name, merged_leader, merged_action)
@@ -248,18 +351,25 @@ class KeymapManager:
                 if key_list is None:
                     unbinds.add((action, state))
                     continue
-                for i, key in enumerate(key_list):
-                    out.append(
-                        ActionKeyDef(
-                            key=key,
-                            action=action,
-                            context=state,
-                            guard=template.guard,
-                            primary=(i == 0),
-                            show=template.show,
-                            priority=template.priority,
+                # Expand friendly chars (e.g. "?") to their canonical Textual
+                # variants. The first entry in the original user list is the
+                # primary; its expansion contributes all primary candidates;
+                # subsequent user entries are aliases.
+                first = True
+                for user_key in key_list:
+                    for canonical in _expand_user_key(user_key):
+                        out.append(
+                            ActionKeyDef(
+                                key=canonical,
+                                action=action,
+                                context=state,
+                                guard=template.guard,
+                                primary=first,
+                                show=template.show,
+                                priority=template.priority,
+                            )
                         )
-                    )
+                    first = False
         return out, unbinds
 
     @staticmethod
@@ -309,16 +419,18 @@ class KeymapManager:
                         f'leader_commands."{menu}"."{action}": expected a key string or null.'
                     )
 
-                out.append(
-                    LeaderCommandDef(
-                        key=key,
-                        action=action,
-                        label=template.label,
-                        category=template.category,
-                        guard=template.guard,
-                        menu=menu,
+                # Expand friendly chars (`":"` → variant list, `"?"` → "question_mark", …).
+                for canonical in _expand_user_key(key):
+                    out.append(
+                        LeaderCommandDef(
+                            key=canonical,
+                            action=action,
+                            label=template.label,
+                            category=template.category,
+                            guard=template.guard,
+                            menu=menu,
+                        )
                     )
-                )
         return out, unbinds
 
     # ------------------------------------------------------------------- merge
@@ -354,40 +466,65 @@ class KeymapManager:
         merged_action: list[ActionKeyDef],
         user_leader: list[LeaderCommandDef],
         user_action: list[ActionKeyDef],
+        base_leader: list[LeaderCommandDef],
+        base_action: list[ActionKeyDef],
     ) -> None:
         """Raise ValueError on user-introduced bindings that collide.
 
         Defaults intentionally bind some keys to multiple actions in the
         same state (e.g. ``d`` in ``tree`` for both delete_connection and
         delete_connection_folder, disambiguated by tree-node state at
-        runtime). We don't flag those. We *do* flag any conflict that a
-        user override either created or contributed to.
+        runtime). We never flag those — and if the user's config preserves
+        that exact overlap (e.g. they copied the full template verbatim),
+        we don't flag that either. We *do* flag any conflict the user
+        actually introduced — a new action joining an existing slot.
         """
         conflicts: list[str] = []
 
-        user_leader_slots = {(u.key, u.menu) for u in user_leader}
-        leader_by_slot: dict[tuple[str, str], set[str]] = defaultdict(set)
-        for cmd in merged_leader:
-            leader_by_slot[(cmd.key, cmd.menu)].add(cmd.action)
-        for (key, menu), actions in sorted(leader_by_slot.items()):
-            if len(actions) > 1 and (key, menu) in user_leader_slots:
-                conflicts.append(
-                    f"leader key {key!r} in menu {menu!r} is bound to multiple actions: "
-                    f"{sorted(actions)}"
-                )
+        def _by_slot_leader(commands):
+            out: dict[tuple[str, str], set[str]] = defaultdict(set)
+            for cmd in commands:
+                out[(cmd.key, cmd.menu)].add(cmd.action)
+            return out
 
+        def _by_slot_action(action_keys):
+            out: dict[tuple[str, str | None], set[str]] = defaultdict(set)
+            for ak in action_keys:
+                out[(ak.key, ak.context)].add(ak.action)
+            return out
+
+        base_leader_slots = _by_slot_leader(base_leader)
+        merged_leader_slots = _by_slot_leader(merged_leader)
+        user_leader_slots = {(u.key, u.menu) for u in user_leader}
+        for slot, actions in sorted(merged_leader_slots.items()):
+            if len(actions) <= 1 or slot not in user_leader_slots:
+                continue
+            # If the actions for this slot match the defaults exactly, the
+            # user just preserved a pre-existing (state-machine-disambiguated)
+            # overlap rather than creating a new one.
+            if actions == base_leader_slots.get(slot):
+                continue
+            key, menu = slot
+            conflicts.append(
+                f"leader key {key!r} in menu {menu!r} is bound to multiple actions: "
+                f"{sorted(actions)}"
+            )
+
+        base_action_slots = _by_slot_action(base_action)
+        merged_action_slots = _by_slot_action(merged_action)
         user_action_slots = {(u.key, u.context) for u in user_action}
-        action_by_slot: dict[tuple[str, str | None], set[str]] = defaultdict(set)
-        for ak in merged_action:
-            action_by_slot[(ak.key, ak.context)].add(ak.action)
-        for (key, ctx), actions in sorted(
-            action_by_slot.items(), key=lambda t: (t[0][0], t[0][1] or "")
+        for slot, actions in sorted(
+            merged_action_slots.items(), key=lambda t: (t[0][0], t[0][1] or "")
         ):
-            if len(actions) > 1 and (key, ctx) in user_action_slots:
-                conflicts.append(
-                    f"key {key!r} in state {ctx!r} is bound to multiple actions: "
-                    f"{sorted(actions)}"
-                )
+            if len(actions) <= 1 or slot not in user_action_slots:
+                continue
+            if actions == base_action_slots.get(slot):
+                continue
+            key, ctx = slot
+            conflicts.append(
+                f"key {key!r} in state {ctx!r} is bound to multiple actions: "
+                f"{sorted(actions)}"
+            )
 
         if conflicts:
             lines = "\n  - ".join(conflicts)

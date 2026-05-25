@@ -1,22 +1,351 @@
 {
-  "_note": "Copy to ~/.config/sqlit/keymap.json (no subdir) — sqlit loads it automatically. List only the bindings you want to change. See docs/custom-keymaps.md for the action/state catalog.",
   "keymap": {
     "action_keys": {
-      "query_normal": {
-        "execute_query": "ctrl+enter"
+      "global": {
+        "leader_key": "space",
+        "quit": "ctrl+q",
+        "cancel_operation": "escape",
+        "show_help": "?",
+        "enter_command_mode": ":",
+        "undo": "ctrl+z",
+        "redo": "ctrl+y"
       },
-      "autocomplete": {
-        "autocomplete_next": "ctrl+n",
-        "autocomplete_prev": "ctrl+p"
+      "navigation": {
+        "focus_explorer": "e",
+        "focus_query": "q",
+        "focus_results": "r"
       },
       "tree": {
-        "tree_cursor_down": ["j", "down"],
-        "tree_cursor_up": ["k", "up"]
+        "new_connection": "n",
+        "enter_tree_visual_mode": "v",
+        "clear_connection_selection": "escape",
+        "select_table": "s",
+        "refresh_tree": [
+          "f",
+          "R"
+        ],
+        "edit_connection": "e",
+        "rename_connection_folder": "M",
+        "delete_connection_folder": [
+          "d",
+          "delete"
+        ],
+        "delete_connection": [
+          "d",
+          "delete"
+        ],
+        "duplicate_connection": "D",
+        "move_connection_to_folder": "m",
+        "disconnect": "x",
+        "collapse_tree": "z",
+        "tree_cursor_down": [
+          "j",
+          "down"
+        ],
+        "tree_cursor_up": [
+          "k",
+          "up"
+        ],
+        "tree_filter": "/"
+      },
+      "tree_filter": {
+        "tree_filter_close": "escape",
+        "tree_filter_accept": "enter"
+      },
+      "tree_visual": {
+        "exit_tree_visual_mode": [
+          "escape",
+          "v"
+        ]
+      },
+      "query_normal": {
+        "enter_insert_mode": "i",
+        "prepend_insert_mode": "I",
+        "open_line_below": "o",
+        "open_line_above": "O",
+        "execute_query": "enter",
+        "paste": "p",
+        "yank_leader_key": "y",
+        "change_leader_key": "c",
+        "g_leader_key": "g",
+        "show_history": "backspace",
+        "new_query": "N",
+        "delete_leader_key": "d",
+        "change_line_end_motion": "C",
+        "delete_line_end": "D",
+        "undo": "u",
+        "redo": "ctrl+r",
+        "cursor_left": "h",
+        "cursor_down": "j",
+        "cursor_up": "k",
+        "cursor_right": "l",
+        "cursor_word_forward": "w",
+        "cursor_WORD_forward": "W",
+        "cursor_word_back": "b",
+        "cursor_WORD_back": "B",
+        "cursor_line_start": "0",
+        "cursor_first_non_blank": "^",
+        "cursor_line_end": "$",
+        "cursor_last_line": "G",
+        "cursor_matching_bracket": "%",
+        "cursor_find_char": "f",
+        "cursor_find_char_back": "F",
+        "cursor_till_char": "t",
+        "cursor_till_char_back": "T",
+        "enter_visual_mode": "v",
+        "enter_visual_line_mode": "V",
+        "delete_char": "x",
+        "append_insert_mode": "a",
+        "append_line_end": "A"
+      },
+      "query_insert": {
+        "exit_insert_mode": "escape",
+        "execute_query_insert": "ctrl+enter",
+        "select_all": "ctrl+a",
+        "copy_selection": "ctrl+c",
+        "paste": "ctrl+v"
+      },
+      "query_visual": {
+        "exit_visual_mode": [
+          "escape",
+          "v"
+        ],
+        "switch_to_visual_line_mode": "V",
+        "visual_yank": "y",
+        "visual_delete": [
+          "d",
+          "x"
+        ],
+        "visual_change": "c",
+        "visual_execute": "enter",
+        "cursor_left": [
+          "h",
+          "left"
+        ],
+        "cursor_down": [
+          "j",
+          "down"
+        ],
+        "cursor_up": [
+          "k",
+          "up"
+        ],
+        "cursor_right": [
+          "l",
+          "right"
+        ],
+        "cursor_word_forward": "w",
+        "cursor_WORD_forward": "W",
+        "cursor_word_back": "b",
+        "cursor_WORD_back": "B",
+        "cursor_line_start": "0",
+        "cursor_first_non_blank": "^",
+        "cursor_line_end": "$",
+        "cursor_last_line": "G",
+        "g_leader_key": "g",
+        "cursor_matching_bracket": "%",
+        "cursor_find_char": "f",
+        "cursor_find_char_back": "F",
+        "cursor_till_char": "t",
+        "cursor_till_char_back": "T"
+      },
+      "query_visual_line": {
+        "exit_visual_line_mode": [
+          "escape",
+          "V"
+        ],
+        "switch_to_visual_mode": "v",
+        "visual_line_yank": "y",
+        "visual_line_delete": [
+          "d",
+          "x"
+        ],
+        "visual_line_change": "c",
+        "cursor_down": [
+          "j",
+          "down"
+        ],
+        "cursor_up": [
+          "k",
+          "up"
+        ],
+        "cursor_last_line": "G",
+        "g_leader_key": "g",
+        "visual_line_execute": "enter"
+      },
+      "autocomplete": {
+        "autocomplete_next": [
+          "ctrl+j",
+          "down"
+        ],
+        "autocomplete_prev": [
+          "ctrl+k",
+          "up"
+        ],
+        "autocomplete_accept": "tab",
+        "autocomplete_close": "escape"
+      },
+      "results": {
+        "view_cell": "v",
+        "view_cell_full": "V",
+        "edit_cell": "u",
+        "delete_row": "d",
+        "results_yank_leader_key": "y",
+        "clear_results": "x",
+        "results_filter": "/",
+        "results_cursor_left": "h",
+        "results_cursor_down": "j",
+        "results_cursor_up": "k",
+        "results_cursor_right": "l",
+        "rg_leader_key": "g",
+        "results_cursor_last_row": "G",
+        "results_page_up": "ctrl+u",
+        "results_page_down": "ctrl+d",
+        "results_cursor_first_column": "0",
+        "results_cursor_last_column": "$",
+        "results_column_picker": [
+          "f",
+          "F"
+        ],
+        "next_result_section": "tab",
+        "prev_result_section": "shift+tab",
+        "toggle_result_section": "z"
+      },
+      "results_filter": {
+        "results_filter_close": "escape",
+        "results_filter_accept": "enter"
+      },
+      "value_view": {
+        "close_value_view": [
+          "q",
+          "escape"
+        ],
+        "copy_value_view": "y",
+        "toggle_value_view_mode": "t",
+        "collapse_all_json_nodes": "z",
+        "expand_all_json_nodes": "Z"
       }
     },
     "leader_commands": {
       "leader": {
-        "show_help": "question_mark"
+        "toggle_explorer": "e",
+        "toggle_fullscreen": "f",
+        "show_connection_picker": "c",
+        "disconnect": "x",
+        "cancel_operation": "z",
+        "change_theme": "t",
+        "edit_query_in_editor": "o",
+        "show_help": "h",
+        "telescope": "space",
+        "telescope_filter": "/",
+        "quit": "q"
+      },
+      "delete": {
+        "line": "d",
+        "word": "w",
+        "WORD": "W",
+        "word_back": "b",
+        "WORD_back": "B",
+        "word_end": "e",
+        "WORD_end": "E",
+        "line_start": "0",
+        "line_end_motion": "$",
+        "line_end": "D",
+        "char": "x",
+        "char_back": "X",
+        "left": "h",
+        "down": "j",
+        "up": "k",
+        "right": "l",
+        "to_end": "G",
+        "find_char": "f",
+        "find_char_back": "F",
+        "till_char": "t",
+        "till_char_back": "T",
+        "matching_bracket": "%",
+        "inner": "i",
+        "around": "a"
+      },
+      "yank": {
+        "line": "y",
+        "word": "w",
+        "WORD": "W",
+        "word_back": "b",
+        "WORD_back": "B",
+        "word_end": "e",
+        "WORD_end": "E",
+        "line_start": "0",
+        "line_end_motion": "$",
+        "left": "h",
+        "down": "j",
+        "up": "k",
+        "right": "l",
+        "to_end": "G",
+        "find_char": "f",
+        "find_char_back": "F",
+        "till_char": "t",
+        "till_char_back": "T",
+        "matching_bracket": "%",
+        "inner": "i",
+        "around": "a"
+      },
+      "change": {
+        "line": "c",
+        "word": "w",
+        "WORD": "W",
+        "word_back": "b",
+        "WORD_back": "B",
+        "word_end": "e",
+        "WORD_end": "E",
+        "line_start": "0",
+        "line_end_motion": "$",
+        "left": "h",
+        "down": "j",
+        "up": "k",
+        "right": "l",
+        "to_end": "G",
+        "find_char": "f",
+        "find_char_back": "F",
+        "till_char": "t",
+        "till_char_back": "T",
+        "matching_bracket": "%",
+        "inner": "i",
+        "around": "a"
+      },
+      "g": {
+        "first_line": "g",
+        "word_end_back": "e",
+        "WORD_end_back": "E",
+        "comment": "c",
+        "execute_query": "r",
+        "execute_single_statement": "s",
+        "execute_query_atomic": "t"
+      },
+      "gc": {
+        "line": "c",
+        "down": "j",
+        "up": "k",
+        "to_end": "G",
+        "selection": "s",
+        "statement": "S"
+      },
+      "ry": {
+        "cell": "c",
+        "row": "y",
+        "all": "a",
+        "export": "e"
+      },
+      "rye": {
+        "csv": "c",
+        "json": "j"
+      },
+      "rg": {
+        "first_row": "g"
+      },
+      "vy": {
+        "value": "y",
+        "field": "f",
+        "all": "a"
       }
     }
   }

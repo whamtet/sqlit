@@ -43,16 +43,40 @@ def reset_keymap_after_test():
     reset_keymap()
 
 
+@pytest.fixture(autouse=True)
+def isolate_default_keymap_file(tmp_path_factory, monkeypatch):
+    """Redirect DEFAULT_KEYMAP_FILE to a per-test tmp dir.
+
+    The loader auto-creates a scaffold keymap.json when one isn't present;
+    we don't want that writing into the developer's real ~/.config/sqlit.
+    """
+    from sqlit.domains.shell.app import keymap_manager as km_mod
+    tmp_dir = tmp_path_factory.mktemp("keymap-isolation")
+    monkeypatch.setattr(km_mod, "DEFAULT_KEYMAP_FILE", tmp_dir / "keymap.json")
+
+
 class TestLifecycle:
-    def test_no_custom_keymap_leaves_defaults(self):
+    def test_no_custom_keymap_leaves_defaults_intact(self):
+        # The loader auto-creates an empty scaffold, but defaults are unchanged.
         manager = KeymapManager(settings_store=MockSettingsStore({}))
         manager.initialize()
-        assert not isinstance(get_keymap(), FileBasedKeymapProvider)
+        assert manager.load_error is None
+        assert get_keymap().action("enter_insert_mode") == "i"
 
-    def test_default_sentinel_skips_loading(self):
+    def test_default_sentinel_uses_scaffold_only(self):
         manager = KeymapManager(settings_store=MockSettingsStore({"custom_keymap": "default"}))
         manager.initialize()
-        assert not isinstance(get_keymap(), FileBasedKeymapProvider)
+        assert manager.load_error is None
+        assert get_keymap().action("enter_insert_mode") == "i"
+
+    def test_scaffold_created_on_first_run(self, tmp_path_factory):
+        # The autouse fixture redirected DEFAULT_KEYMAP_FILE to a fresh tmp dir.
+        from sqlit.domains.shell.app import keymap_manager as km_mod
+        assert not km_mod.DEFAULT_KEYMAP_FILE.exists()
+        KeymapManager(settings_store=MockSettingsStore({})).initialize()
+        assert km_mod.DEFAULT_KEYMAP_FILE.exists()
+        body = json.loads(km_mod.DEFAULT_KEYMAP_FILE.read_text())
+        assert body == {"keymap": {"action_keys": {}, "leader_commands": {}}}
 
     def test_invalid_json_falls_back(self, tmp_path: Path):
         path = tmp_path / "invalid.json"
@@ -221,14 +245,65 @@ class TestDefaultKeymapFile:
         manager.initialize()
         assert get_keymap().action("execute_query") == "ctrl+shift+enter"
 
-    def test_no_default_file_and_no_setting_is_silent(self, tmp_path: Path, monkeypatch):
+    def test_no_setting_creates_scaffold_and_loads_it(self, tmp_path: Path, monkeypatch):
         from sqlit.domains.shell.app import keymap_manager as km_mod
-        # Point at a path that doesn't exist.
-        monkeypatch.setattr(km_mod, "DEFAULT_KEYMAP_FILE", tmp_path / "nope.json")
+        target = tmp_path / "fresh-config" / "keymap.json"
+        monkeypatch.setattr(km_mod, "DEFAULT_KEYMAP_FILE", target)
+        assert not target.exists()
         manager = KeymapManager(settings_store=MockSettingsStore({}))
         manager.initialize()
         assert manager.load_error is None
-        assert not isinstance(get_keymap(), FileBasedKeymapProvider)
+        assert target.exists(), "scaffold must be written on first run"
+        # Defaults are still in effect since the scaffold is empty.
+        assert get_keymap().action("enter_insert_mode") == "i"
+
+
+class TestFriendlyKeyNames:
+    """User can write `:` instead of `colon`, `?` instead of `question_mark`, etc."""
+
+    def test_question_mark_normalizes(self, tmp_path: Path):
+        _load(
+            tmp_path,
+            "qmark",
+            {"keymap": {"leader_commands": {"leader": {"show_help": "?"}}}},
+        )
+        # Internally stored as canonical Textual name.
+        assert get_keymap().leader("show_help", "leader") == "question_mark"
+
+    def test_colon_expands_to_all_terminal_variants(self, tmp_path: Path):
+        # `:` is emitted as `colon`, `shift+semicolon`, or `:` depending on
+        # the terminal/platform — `_expand_user_key` covers all three so the
+        # binding works everywhere.
+        _load(
+            tmp_path,
+            "colon",
+            {"keymap": {"action_keys": {"global": {"enter_command_mode": ":"}}}},
+        )
+        keys = get_keymap().keys_for_action("enter_command_mode")
+        assert "colon" in keys
+        assert "shift+semicolon" in keys
+        assert ":" in keys
+
+    def test_friendly_char_with_modifier(self, tmp_path: Path):
+        _load(
+            tmp_path,
+            "ctrl-slash",
+            {"keymap": {"action_keys": {"tree": {"tree_filter": "ctrl+/"}}}},
+        )
+        # ctrl+/ canonicalizes to ctrl+slash.
+        keys = get_keymap().keys_for_action("tree_filter")
+        assert "ctrl+slash" in keys
+        assert "/" not in keys
+        assert "slash" not in keys
+
+    def test_canonical_names_still_work(self, tmp_path: Path):
+        # User can still write the canonical Textual name if they want to.
+        _load(
+            tmp_path,
+            "canonical",
+            {"keymap": {"leader_commands": {"leader": {"show_help": "question_mark"}}}},
+        )
+        assert get_keymap().leader("show_help", "leader") == "question_mark"
 
 
 class TestUnbind:
