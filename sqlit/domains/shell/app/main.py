@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.events import Key
 from textual.lazy import Lazy
@@ -77,6 +78,7 @@ class SSMSTUI(
     ResultsFilterMixin,
     UINavigationMixin,
     App,
+    inherit_bindings=False,
 ):
     """Main SSMS TUI application."""
 
@@ -85,7 +87,14 @@ class SSMSTUI(
 
     LAYERS = ["autocomplete"]
 
-    BINDINGS: ClassVar[list[Any]] = []
+    # We opt out of Textual's inherited App.BINDINGS so the keymap is the
+    # single source of truth for what keys do. We re-declare the quit
+    # binding here with id="quit" so the keymap-driven `app.set_keymap()`
+    # call in startup_flow can remap it (Textual's keymap remapping is
+    # id-based; the framework default has no id).
+    BINDINGS: ClassVar[list[Any]] = [
+        Binding("ctrl+q", "quit", "Quit", priority=True, show=False, id="quit"),
+    ]
 
     query_executing: bool = reactive(False)
     current_connection: Any | None = reactive(None)

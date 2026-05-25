@@ -484,6 +484,13 @@ class DefaultKeymapProvider(KeymapProvider):
             ActionKeyDef("t", "toggle_value_view_mode", "value_view"),
             ActionKeyDef("z", "collapse_all_json_nodes", "value_view"),
             ActionKeyDef("Z", "expand_all_json_nodes", "value_view"),
+            # Error dialog (screen-local — action methods live on ErrorScreen,
+            # not the App; the validator skips this context for that reason)
+            ActionKeyDef("y", "error_copy_message", "error_dialog"),
+            # Connection editor (screen-local, same as above)
+            ActionKeyDef("ctrl+s", "connection_save", "connection_editor"),
+            ActionKeyDef("ctrl+t", "connection_test", "connection_editor"),
+            ActionKeyDef("ctrl+d", "connection_install_driver", "connection_editor"),
         ]
 
 
