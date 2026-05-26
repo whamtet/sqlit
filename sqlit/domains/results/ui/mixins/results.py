@@ -813,7 +813,9 @@ class ResultsMixin:
 
         try:
             cursor_row, _cursor_col = table.cursor_coordinate
-            row_values = table.get_row_at(cursor_row)
+            row_values = [
+                _strip_table_markup(table, v) for v in table.get_row_at(cursor_row)
+            ]
         except Exception:
             return
 
@@ -895,7 +897,9 @@ class ResultsMixin:
 
         try:
             cursor_row, cursor_col = table.cursor_coordinate
-            row_values = table.get_row_at(cursor_row)
+            row_values = [
+                _strip_table_markup(table, v) for v in table.get_row_at(cursor_row)
+            ]
         except Exception:
             return
 
