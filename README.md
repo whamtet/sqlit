@@ -17,10 +17,12 @@ This fork wraps the sqlite provider and provides an extension to standard sqlite
 
 Instead of specifying the new value of `my_col` we provide it with a snippet of Babashka to manipulate the underlying edn.
 We invoke a babashka subprocess at the start of the query, query the underlying data into python (the language of sqlit)
-and then forward each row to babashka to get the new value.  Finally, we update the new value using `my_primary_key`.
+and then forward each row to babashka to get the new value.  Finally, we update the new values using `my_primary_key`.
 
 The sqlite wrapper doesn't use a full sql parser.  Instead we use [this](https://github.com/whamtet/sqlit/blob/main/sqlit/domains/connections/providers/sqlite/sqlite_wrapper.py#L12) rickety regex.  
 Luckily copying an sqlite db is just a single file so it shouldn't be too hard to break things badly.
+
+## Regular Documentation follows:
 
 <p align="center">
   <img src="assets/favorites/logo_sqlit.png" alt="sqlit logo" width="180">
