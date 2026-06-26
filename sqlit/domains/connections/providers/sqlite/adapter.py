@@ -36,6 +36,7 @@ class SQLiteAdapter(DatabaseAdapter):
     def connect(self, config: ConnectionConfig) -> Any:
         """Connect to SQLite database file."""
         import sqlite3
+        from .sqlite_wrapper import konnect
 
         file_endpoint = config.file_endpoint
         if file_endpoint is None:
@@ -45,7 +46,7 @@ class SQLiteAdapter(DatabaseAdapter):
         # (for async query execution). SQLite serializes access internally.
         connect_args: dict[str, Any] = {"check_same_thread": False}
         connect_args.update(config.extra_options)
-        conn = sqlite3.connect(file_path, **connect_args)
+        conn = konnect(file_path, **connect_args)
         conn.row_factory = sqlite3.Row
         return conn
 

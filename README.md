@@ -1,3 +1,24 @@
+# Clojure fork of sqlit
+
+First make sure [Babashka](https://babashka.org/) is installed and on PATH
+
+    git clone https://github.com/whamtet/sqlit
+    uv sync
+    uv run sqlit-tui
+
+## Explanation
+
+Sqlite is my db of choice and it has just INTEGER, REAL, TEXT and BLOB as storage classes.  
+When my db schema is not settled I like to create a TEXT column called something like 'details' and dump edn into it.
+I recently came across the very nice sqlit TUI for exploring and manipulating sqlite among other databases.
+This fork wraps the sqlite provider and provides an extension to standard sqlite syntax
+
+    updateclj my_table set my_col = (assoc *input* :hi :there) where first_name = 'Fred' use primary key my_primary_key
+
+Instead of specifying the new value of `my_col` we provide it with a snippet of Babashka to manipulate the underlying edn.
+We invoke a babashka subprocess at the start of the query, query the underlying data into python (the language of sqlit)
+and then forward each row to babashka to get the new value.  Finally, we update the new value using `my_primary_key`.
+
 <p align="center">
   <img src="assets/favorites/logo_sqlit.png" alt="sqlit logo" width="180">
 </p>
