@@ -22,6 +22,12 @@ and then forward each row to babashka to get the new value.  Finally, we update 
 The sqlite wrapper doesn't use a full sql parser.  Instead we use [this](https://github.com/whamtet/sqlit/blob/main/sqlit/domains/connections/providers/sqlite/sqlite_wrapper.py#L12) rickety regex.  
 Luckily copying an sqlite db is just a single file so it shouldn't be too hard to break things badly.
 
+There is also a query syntax
+
+    selectclj my_col [:k1 :k2] from my_table where ...
+
+`(get-in my_col [:k1 :k2])` will be applied to each row
+
 ## Regular Documentation follows:
 
 <p align="center">

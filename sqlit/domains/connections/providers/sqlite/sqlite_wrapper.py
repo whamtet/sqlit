@@ -48,6 +48,35 @@ def run_update(sql, cursor):
         process.stdout.close()
         process.terminate()
 
+def run_select(sql, cursor):
+
+    sql_regex = r"selectclj(.*?)(\[.*?\])(.*)"
+    prior, get_in, rest = re.search(sql_regex, sql).groups()
+
+    updater = '(keys *input*)' if get_in == '[:keys]' else f'(get-in *input* {get_in} -1)'
+    process = popen(updater)
+
+    try:
+
+        select = f'select {prior} {rest}'
+        results = cursor.execute(select).fetchall()
+        out = []
+
+        for row in results:
+            process.stdin.write(row[0] + '\n')
+            process.stdin.flush()
+
+            v = process.stdout.readline().strip()
+            out.append([v])
+
+        return out
+
+    finally:
+
+        process.stdin.close()
+        process.stdout.close()
+        process.terminate()
+
 class Cursor:
     def __init__(self, cursor):
         self._cursor = cursor
@@ -58,6 +87,10 @@ class Cursor:
         sql2 = sql.lstrip().lower()
         if sql2.startswith("updateclj"):
             self._rowcount = run_update(sql2, self._cursor)
+            return
+
+        if sql2.startswith("selectclj"):
+            self._results = run_select(sql2, self._cursor)
             return
 
         self._cursor.execute(sql, params)
@@ -72,6 +105,11 @@ class Cursor:
         if self._results is not None:
             return self._results
         return self._cursor.fetchall()
+
+    def fetchmany(self, n):
+        if self._results is not None:
+            return self._results
+        return self._cursor.fetchmany(n)
 
     def __getattr__(self, name):
         return getattr(self._cursor, name)
