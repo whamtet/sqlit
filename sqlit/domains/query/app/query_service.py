@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from sqlit.shared.core.protocols import HistoryStoreProtocol, QueryExecutorProtocol
 
 # Query types that return result sets (SELECT-like queries)
-SELECT_KEYWORDS = frozenset(["SELECT", "WITH", "SHOW", "DESCRIBE", "EXPLAIN", "PRAGMA", "SELECTCLJ"])
+SELECT_KEYWORDS = frozenset(["SELECT", "WITH", "SHOW", "DESCRIBE", "EXPLAIN", "PRAGMA"])
 
 # DML statements that may carry a RETURNING clause — when present they produce a result set.
 _DML_KEYWORDS = frozenset(["INSERT", "UPDATE", "DELETE", "MERGE"])

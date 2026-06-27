@@ -24,7 +24,7 @@ Luckily copying an sqlite db is just a single file so it shouldn't be too hard t
 
 There is also a query syntax
 
-    selectclj my_col [:k1 :k2] from my_table where ...
+    select clj my_col [:k1 :k2] from my_table where ...
 
 `(get-in my_col [:k1 :k2])` will be applied to each row
 
