@@ -50,10 +50,9 @@ def run_update(sql, cursor):
 
 def run_select(sql, cursor):
 
-    sql_regex = r"select clj(.*?)(\[.*?\])(.*)"
-    prior, get_in, rest = re.search(sql_regex, sql).groups()
+    sql_regex = r"select clj\s+(\w+)(.*?)(from.*)"
+    prior, updater, rest = re.search(sql_regex, sql).groups()
 
-    updater = '(pr-str (keys *input*))' if get_in == '[:keys]' else f'(get-in *input* {get_in} -1)'
     process = popen(updater)
 
     try:

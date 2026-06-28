@@ -24,9 +24,9 @@ Luckily copying an sqlite db is just a single file so it shouldn't be too hard t
 
 There is also a query syntax
 
-    select clj my_col [:k1 :k2] from my_table where ...
+    select clj my_col (:k *input* -1) from my_table where ...
 
-`(get-in my_col [:k1 :k2])` will be applied to each row
+`(:k *input* -1)` will be applied to each row.  Be careful not to return `nil` on any rows.
 
 ## Regular Documentation follows:
 
