@@ -62,11 +62,12 @@ def run_select(sql, cursor):
         out = []
 
         for row in results:
-            process.stdin.write(row[0] + '\n')
-            process.stdin.flush()
+            if row[0]:
+                process.stdin.write(row[0] + '\n')
+                process.stdin.flush()
 
-            v = process.stdout.readline().strip()
-            out.append([v])
+                v = process.stdout.readline().strip()
+                out.append([v])
 
         return out
 
